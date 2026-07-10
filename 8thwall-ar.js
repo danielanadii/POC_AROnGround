@@ -9,6 +9,8 @@ const hotspotCard = document.querySelector("#xrHotspotCard");
 const closeHotspot = document.querySelector("#closeXrHotspot");
 
 const hotspotWorld = new THREE.Vector3(0, 0.42, -0.34);
+const raycaster = new THREE.Raycaster();
+const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
 let xrScene = null;
 let car = null;
@@ -19,6 +21,7 @@ let started = false;
 let lastCanvasWidth = 0;
 let lastCanvasHeight = 0;
 let cameraMode = localStorage.getItem("supra-camera-mode") === "fill" ? "fill" : "fit";
+let estimatedFloorY = null;
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -132,6 +135,16 @@ function frameModel(object) {
   object.rotation.y = Math.PI;
 }
 
+function placeModelAt(position) {
+  if (!modelRoot) return;
+
+  modelRoot.position.copy(position);
+  modelRoot.visible = true;
+  placed = true;
+  estimatedFloorY = position.y;
+  setStatus("Placed. Tap another floor spot to move it.");
+}
+
 async function loadCar(scene) {
   const loader = new THREE.GLTFLoader();
   const gltf = await loader.loadAsync("./toyota_gr_supra.glb");
@@ -151,44 +164,93 @@ async function loadCar(scene) {
   setStatus("Scan the floor, then tap to place");
 }
 
-function placeAtCameraForward(distance = 2.2) {
+function getPointOnEstimatedFloor(clientX, clientY, distance = 2.4) {
   if (!xrScene || !modelRoot) return;
 
   const { camera } = xrScene;
-  const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-  const position = camera.position.clone().add(direction.multiplyScalar(distance));
-  position.y -= 0.65;
+  const rect = canvas.getBoundingClientRect();
+  const x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  const y = -(((clientY - rect.top) / rect.height) * 2 - 1);
+  const floorY = estimatedFloorY ?? camera.position.y - 1.35;
 
-  modelRoot.position.copy(position);
-  modelRoot.visible = true;
-  placed = true;
-  setStatus("Placed. Tap another spot to move it.");
+  floorPlane.constant = -floorY;
+  raycaster.setFromCamera({ x, y }, camera);
+
+  const floorPoint = new THREE.Vector3();
+  if (raycaster.ray.intersectPlane(floorPlane, floorPoint) && floorPoint.distanceTo(camera.position) > 0.35) {
+    return floorPoint;
+  }
+
+  const direction = new THREE.Vector3(0, -0.28, -1).applyQuaternion(camera.quaternion).normalize();
+  return camera.position.clone().add(direction.multiplyScalar(distance)).setY(floorY);
+}
+
+function placeAtEstimatedFloor() {
+  const viewport = getViewportSize();
+  const point = getPointOnEstimatedFloor(viewport.width * 0.5, viewport.height * 0.72);
+  if (point) placeModelAt(point);
+}
+
+function getHitPosition(hit) {
+  if (!hit) return null;
+
+  if (hit.position) {
+    if (Array.isArray(hit.position)) return new THREE.Vector3(hit.position[0], hit.position[1], hit.position[2]);
+    return new THREE.Vector3(hit.position.x, hit.position.y, hit.position.z);
+  }
+
+  if (hit.worldPosition) {
+    if (Array.isArray(hit.worldPosition)) {
+      return new THREE.Vector3(hit.worldPosition[0], hit.worldPosition[1], hit.worldPosition[2]);
+    }
+    return new THREE.Vector3(hit.worldPosition.x, hit.worldPosition.y, hit.worldPosition.z);
+  }
+
+  if (hit.transform?.position) {
+    const { position } = hit.transform;
+    return new THREE.Vector3(position.x, position.y, position.z);
+  }
+
+  return null;
+}
+
+function hitTestAt(clientX, clientY) {
+  if (!window.XR8?.XrController) return null;
+
+  const rect = canvas.getBoundingClientRect();
+  const attempts = [
+    [clientX, clientY],
+    [clientX - rect.left, clientY - rect.top],
+  ];
+
+  for (const [x, y] of attempts) {
+    try {
+      const hits = window.XR8.XrController.hitTest(x, y, [
+        "FEATURE_POINT",
+        "ESTIMATED_SURFACE",
+        "DETECTED_SURFACE",
+      ]);
+      const position = getHitPosition(hits?.[0]);
+      if (position) return position;
+    } catch (error) {
+      console.warn(error);
+    }
+  }
+
+  return null;
 }
 
 function tryHitTestPlace(event) {
-  if (!window.XR8?.XrController || !modelRoot) return placeAtCameraForward();
+  if (!modelRoot) return;
 
-  try {
-    const rect = canvas.getBoundingClientRect();
-    const hits = window.XR8.XrController.hitTest(
-      event.clientX - rect.left,
-      event.clientY - rect.top,
-      ["FEATURE_POINT", "ESTIMATED_SURFACE", "DETECTED_SURFACE"]
-    );
-
-    if (hits && hits.length) {
-      const hit = hits[0];
-      modelRoot.position.set(hit.position.x, hit.position.y, hit.position.z);
-      modelRoot.visible = true;
-      placed = true;
-      setStatus("Placed. Tap another spot to move it.");
-      return;
-    }
-  } catch (error) {
-    console.warn(error);
+  const hitPosition = hitTestAt(event.clientX, event.clientY);
+  if (hitPosition) {
+    placeModelAt(hitPosition);
+    return;
   }
 
-  placeAtCameraForward();
+  const floorPoint = getPointOnEstimatedFloor(event.clientX, event.clientY);
+  if (floorPoint) placeModelAt(floorPoint);
 }
 
 function updateHotspot() {
@@ -275,7 +337,7 @@ function onxrloaded() {
 }
 
 canvas.addEventListener("pointerdown", tryHitTestPlace);
-placeCenterButton.addEventListener("click", placeAtCameraForward);
+placeCenterButton.addEventListener("click", placeAtEstimatedFloor);
 cameraModeButton.addEventListener("click", toggleCameraMode);
 scaleInput.addEventListener("input", applyScale);
 hotspotDot.addEventListener("click", () => hotspotCard.classList.add("is-visible"));
