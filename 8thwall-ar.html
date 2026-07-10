@@ -6,6 +6,8 @@
     <meta name="theme-color" content="#111827" />
     <title>Toyota GR Supra 8th Wall AR</title>
     <link rel="stylesheet" href="./8thwall-ar.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script
       src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js"
       async
@@ -45,14 +47,6 @@
       </section>
     </main>
 
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.166.1/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.166.1/examples/jsm/"
-        }
-      }
-    </script>
-    <script type="module" src="./8thwall-ar.js"></script>
+    <script src="./8thwall-ar.js" defer></script>
   </body>
 </html>

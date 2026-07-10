@@ -1,6 +1,3 @@
-import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-
 const canvas = document.querySelector("#xrCanvas");
 const statusEl = document.querySelector("#xrStatus");
 const scaleInput = document.querySelector("#xrScale");
@@ -17,10 +14,20 @@ let car = null;
 let modelRoot = null;
 let baseScale = 1;
 let placed = false;
+let started = false;
 
 function setStatus(text) {
   statusEl.textContent = text;
 }
+
+window.addEventListener("error", (event) => {
+  setStatus(`Error: ${event.message}`);
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  const message = event.reason?.message || String(event.reason);
+  setStatus(`Error: ${message}`);
+});
 
 function applyScale() {
   const scale = Number(scaleInput.value);
@@ -41,7 +48,7 @@ function frameModel(object) {
 }
 
 async function loadCar(scene) {
-  const loader = new GLTFLoader();
+  const loader = new THREE.GLTFLoader();
   const gltf = await loader.loadAsync("./toyota_gr_supra.glb");
   car = gltf.scene;
   car.traverse((child) => {
@@ -121,7 +128,7 @@ function initScenePipelineModule() {
       xrScene = window.XR8.Threejs.xrScene();
       const { scene, camera, renderer } = xrScene;
 
-      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      if ("outputEncoding" in renderer) renderer.outputEncoding = THREE.sRGBEncoding;
       renderer.shadowMap.enabled = true;
 
       scene.add(new THREE.HemisphereLight(0xffffff, 0x95a3b8, 2.4));
@@ -140,7 +147,16 @@ function initScenePipelineModule() {
 }
 
 function onxrloaded() {
+  if (started) return;
+  started = true;
+
   const { XR8 } = window;
+  if (!window.THREE || !THREE.GLTFLoader) {
+    setStatus("Three.js loader did not load");
+    return;
+  }
+
+  setStatus("Starting camera");
   XR8.addCameraPipelineModules([
     XR8.GlTextureRenderer.pipelineModule(),
     XR8.Threejs.pipelineModule(),
@@ -149,7 +165,12 @@ function onxrloaded() {
   ]);
 
   XR8.XrController.configure({ disableWorldTracking: false });
-  XR8.run({ canvas, allowedDevices: XR8.XrConfig.device().ANY });
+  try {
+    XR8.run({ canvas, allowedDevices: XR8.XrConfig.device().ANY });
+  } catch (error) {
+    started = false;
+    setStatus(`8th Wall failed: ${error.message}`);
+  }
 }
 
 canvas.addEventListener("pointerdown", tryHitTestPlace);
@@ -160,11 +181,14 @@ closeHotspot.addEventListener("click", () => hotspotCard.classList.remove("is-vi
 
 if (!window.isSecureContext) {
   setStatus("Open over HTTPS to use camera AR");
+} else if (!window.THREE || !THREE.GLTFLoader) {
+  setStatus("Three.js loader did not load");
 } else if (window.XR8) {
   onxrloaded();
 } else {
   window.addEventListener("xrloaded", onxrloaded);
   window.setTimeout(() => {
     if (!window.XR8) setStatus("8th Wall engine did not load");
+    else if (!started) onxrloaded();
   }, 12000);
 }
