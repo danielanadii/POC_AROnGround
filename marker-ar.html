@@ -6,8 +6,6 @@
     <meta name="theme-color" content="#111827" />
     <title>Toyota GR Supra Website AR</title>
     <link rel="stylesheet" href="./marker-ar.css" />
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   </head>
   <body>
     <main class="web-ar-shell">
@@ -34,6 +32,11 @@
         <p>Hotspot</p>
         <h2>GR Supra</h2>
         <span>Inline-six turbo coupe. Tap the green point again to revisit this note.</span>
+      </section>
+
+      <section class="secure-card" id="secureCard" aria-live="polite">
+        <h2>Camera needs HTTPS</h2>
+        <p>Website AR uses the browser camera. Open this page from your GitHub Pages HTTPS URL, not a local IP address.</p>
       </section>
 
       <a-scene
@@ -66,6 +69,6 @@
       </a-scene>
     </main>
 
-    <script src="./marker-ar.js"></script>
+    <script src="./marker-ar-loader.js"></script>
   </body>
 </html>
