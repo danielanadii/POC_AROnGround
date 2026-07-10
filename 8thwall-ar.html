@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#111827" />
+    <title>Toyota GR Supra 8th Wall AR</title>
+    <link rel="stylesheet" href="./8thwall-ar.css" />
+    <script
+      src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js"
+      async
+      crossorigin="anonymous"
+      data-preload-chunks="slam"
+    ></script>
+  </head>
+  <body>
+    <main class="xr-shell">
+      <canvas id="xrCanvas" aria-label="8th Wall AR Toyota GR Supra"></canvas>
+
+      <section class="xr-top">
+        <div>
+          <p>Toyota GR Supra</p>
+          <h1>8th Wall AR</h1>
+        </div>
+        <a href="./index.html" aria-label="Back to 3D viewer">Back</a>
+      </section>
+
+      <section class="xr-panel">
+        <div class="slider-row">
+          <label for="xrScale">Scale</label>
+          <input id="xrScale" type="range" min="0.5" max="2" step="0.05" value="1" />
+          <output id="xrScaleValue" for="xrScale">1.00x</output>
+        </div>
+        <div class="xr-status" id="xrStatus">Loading 8th Wall</div>
+        <button id="placeCenter" type="button">Place in front</button>
+      </section>
+
+      <button class="hotspot-dot" id="xrHotspot" type="button" aria-label="Open Supra hotspot"></button>
+
+      <section class="hotspot-card" id="xrHotspotCard" aria-live="polite">
+        <button id="closeXrHotspot" type="button" aria-label="Close hotspot">x</button>
+        <p>Hotspot</p>
+        <h2>GR Supra</h2>
+        <span>8th Wall world tracking anchors this model in the camera scene when supported.</span>
+      </section>
+    </main>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.166.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.166.1/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="./8thwall-ar.js"></script>
+  </body>
+</html>
