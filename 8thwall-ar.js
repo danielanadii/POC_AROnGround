@@ -15,9 +15,46 @@ let modelRoot = null;
 let baseScale = 1;
 let placed = false;
 let started = false;
+let lastCanvasWidth = 0;
+let lastCanvasHeight = 0;
 
 function setStatus(text) {
   statusEl.textContent = text;
+}
+
+function getViewportSize() {
+  const visualViewport = window.visualViewport;
+  return {
+    width: Math.round(visualViewport?.width || window.innerWidth),
+    height: Math.round(visualViewport?.height || window.innerHeight),
+  };
+}
+
+function fitCanvasToScreen() {
+  const { width, height } = getViewportSize();
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+  const bufferWidth = Math.round(width * pixelRatio);
+  const bufferHeight = Math.round(height * pixelRatio);
+
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  canvas.style.left = "0";
+  canvas.style.top = "0";
+
+  if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
+    canvas.width = bufferWidth;
+    canvas.height = bufferHeight;
+  }
+
+  if (xrScene && (lastCanvasWidth !== bufferWidth || lastCanvasHeight !== bufferHeight)) {
+    const { renderer, camera } = xrScene;
+    renderer.setPixelRatio(pixelRatio);
+    renderer.setSize(width, height, false);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    lastCanvasWidth = bufferWidth;
+    lastCanvasHeight = bufferHeight;
+  }
 }
 
 window.addEventListener("error", (event) => {
@@ -125,11 +162,13 @@ function initScenePipelineModule() {
   return {
     name: "supra-scene",
     onStart: async () => {
+      fitCanvasToScreen();
       xrScene = window.XR8.Threejs.xrScene();
       const { scene, camera, renderer } = xrScene;
 
       if ("outputEncoding" in renderer) renderer.outputEncoding = THREE.sRGBEncoding;
       renderer.shadowMap.enabled = true;
+      fitCanvasToScreen();
 
       scene.add(new THREE.HemisphereLight(0xffffff, 0x95a3b8, 2.4));
       const keyLight = new THREE.DirectionalLight(0xffffff, 3);
@@ -142,7 +181,10 @@ function initScenePipelineModule() {
 
       await loadCar(scene);
     },
-    onUpdate: updateHotspot,
+    onUpdate: () => {
+      fitCanvasToScreen();
+      updateHotspot();
+    },
   };
 }
 
@@ -157,6 +199,7 @@ function onxrloaded() {
   }
 
   setStatus("Starting camera");
+  fitCanvasToScreen();
   XR8.addCameraPipelineModules([
     XR8.GlTextureRenderer.pipelineModule(),
     XR8.Threejs.pipelineModule(),
@@ -166,7 +209,15 @@ function onxrloaded() {
 
   XR8.XrController.configure({ disableWorldTracking: false });
   try {
-    XR8.run({ canvas, allowedDevices: XR8.XrConfig.device().ANY });
+    XR8.run({
+      canvas,
+      allowedDevices: XR8.XrConfig.device().ANY,
+      cameraConfig: {
+        direction: XR8.XrConfig.camera().BACK,
+      },
+    });
+    window.setTimeout(fitCanvasToScreen, 250);
+    window.setTimeout(fitCanvasToScreen, 1000);
   } catch (error) {
     started = false;
     setStatus(`8th Wall failed: ${error.message}`);
@@ -178,7 +229,11 @@ placeCenterButton.addEventListener("click", placeAtCameraForward);
 scaleInput.addEventListener("input", applyScale);
 hotspotDot.addEventListener("click", () => hotspotCard.classList.add("is-visible"));
 closeHotspot.addEventListener("click", () => hotspotCard.classList.remove("is-visible"));
+window.addEventListener("resize", fitCanvasToScreen);
+window.visualViewport?.addEventListener("resize", fitCanvasToScreen);
+window.addEventListener("orientationchange", () => window.setTimeout(fitCanvasToScreen, 250));
 
+fitCanvasToScreen();
 if (!window.isSecureContext) {
   setStatus("Open over HTTPS to use camera AR");
 } else if (!window.THREE || !THREE.GLTFLoader) {

@@ -31,10 +31,22 @@ body {
   inset: 0;
 }
 
-#xrCanvas {
-  width: 100vw;
-  height: 100vh;
+#xrCanvas,
+.xr-shell canvas,
+.xr-shell video,
+body > canvas,
+body > video {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-width: 100vw !important;
+  min-height: 100dvh !important;
   display: block;
+  object-fit: cover !important;
+}
+
+#xrCanvas {
   touch-action: none;
 }
 
