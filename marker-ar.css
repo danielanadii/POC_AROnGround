@@ -26,23 +26,43 @@ body {
 }
 
 .web-ar-shell,
-a-scene {
+#cameraFeed,
+#cameraScene {
   position: fixed;
   inset: 0;
 }
 
-a-scene {
+#cameraFeed {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  background: #111827;
+  z-index: 0;
+}
+
+#cameraScene {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  touch-action: none;
   z-index: 1;
 }
 
 .ar-top,
 .ar-panel,
 .hotspot-card,
-.secure-card {
+.secure-card,
+.hotspot-dot {
   position: fixed;
+  z-index: 4;
+}
+
+.ar-top,
+.ar-panel,
+.hotspot-card,
+.secure-card {
   left: max(16px, env(safe-area-inset-left));
   right: max(16px, env(safe-area-inset-right));
-  z-index: 4;
 }
 
 .ar-top {
@@ -136,16 +156,31 @@ output {
   min-height: 42px;
   display: grid;
   place-items: center;
+  border: 0;
   border-radius: 8px;
   background: var(--accent);
   color: #ffffff;
   font-size: 0.9rem;
   font-weight: 850;
-  text-decoration: none;
+}
+
+.hotspot-dot {
+  display: none;
+  width: 34px;
+  height: 34px;
+  border: 4px solid rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+}
+
+.hotspot-dot.is-visible {
+  display: block;
 }
 
 .hotspot-card {
-  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 116px);
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 142px);
   display: none;
   padding: 14px 46px 14px 14px;
   border: 1px solid var(--line);
