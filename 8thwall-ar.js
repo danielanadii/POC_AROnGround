@@ -198,7 +198,7 @@ function placeAtReticle() {
     return;
   }
 
-  setStatus("No floor target yet. Move phone slowly at the floor.");
+  setStatus("No floor target yet. Aim lower and move slowly.");
 }
 
 function getHitPosition(hit) {
@@ -235,6 +235,17 @@ function getHitPosition(hit) {
   return null;
 }
 
+function isFloorLikePosition(position) {
+  if (!xrScene || !position) return false;
+
+  const { camera } = xrScene;
+  const distance = position.distanceTo(camera.position);
+  const belowCamera = camera.position.y - position.y;
+  const horizontalDistance = Math.hypot(position.x - camera.position.x, position.z - camera.position.z);
+
+  return belowCamera > 0.45 && distance > 0.7 && distance < 7 && horizontalDistance > 0.35;
+}
+
 function hitTestAt(clientX, clientY) {
   if (!window.XR8?.XrController) return null;
 
@@ -250,11 +261,10 @@ function hitTestAt(clientX, clientY) {
   for (const [x, y] of attempts) {
     try {
       const hits = window.XR8.XrController.hitTest(x, y, [
-        "FEATURE_POINT",
-        "ESTIMATED_SURFACE",
         "DETECTED_SURFACE",
+        "ESTIMATED_SURFACE",
       ]);
-      const position = getHitPosition(hits?.[0]);
+      const position = hits?.map(getHitPosition).find(isFloorLikePosition);
       if (position) return position;
     } catch (error) {
       console.warn(error);
@@ -297,7 +307,7 @@ function updateTrackedReticle() {
   placeCenterButton.disabled = true;
   targetLocked = false;
   if (!placed && framesWithoutHit === 90) {
-    setStatus("Still scanning. Point at textured floor and move slowly.");
+    setStatus("Still scanning. Aim at the floor, not walls or ceiling.");
   }
 }
 
