@@ -68,7 +68,7 @@ body > video {
     0 10px 34px rgba(0, 0, 0, 0.28);
   transform: translate(-50%, -50%) rotateX(64deg);
   pointer-events: none;
-  opacity: 0.95;
+  opacity: 0.25;
 }
 
 .placement-reticle::after {
@@ -205,6 +205,11 @@ output {
   color: #ffffff;
   font-size: 0.9rem;
   font-weight: 850;
+}
+
+#placeCenter:disabled {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .hotspot-dot {

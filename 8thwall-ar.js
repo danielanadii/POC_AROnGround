@@ -10,19 +10,20 @@ const hotspotCard = document.querySelector("#xrHotspotCard");
 const closeHotspot = document.querySelector("#closeXrHotspot");
 
 const hotspotWorld = new THREE.Vector3(0, 0.42, -0.34);
-const raycaster = new THREE.Raycaster();
-const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
 let xrScene = null;
 let car = null;
 let modelRoot = null;
+let reticleMesh = null;
+let reticleHitPosition = null;
 let baseScale = 1;
 let placed = false;
 let started = false;
 let lastCanvasWidth = 0;
 let lastCanvasHeight = 0;
 let cameraMode = localStorage.getItem("supra-camera-mode") === "fill" ? "fill" : "fit";
-let estimatedFloorY = null;
+let framesWithoutHit = 0;
+let targetLocked = false;
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -142,8 +143,7 @@ function placeModelAt(position) {
   modelRoot.position.copy(position);
   modelRoot.visible = true;
   placed = true;
-  estimatedFloorY = position.y;
-  setStatus("Placed on target. Move the phone, then place again.");
+  setStatus("Placed. Move phone to find another target.");
 }
 
 function getReticleCenter() {
@@ -152,6 +152,23 @@ function getReticleCenter() {
     x: rect.left + rect.width * 0.5,
     y: rect.top + rect.height * 0.5,
   };
+}
+
+function createTrackedReticle(scene) {
+  const ring = new THREE.RingGeometry(0.34, 0.42, 64);
+  const material = new THREE.MeshBasicMaterial({
+    color: 0x16b891,
+    transparent: true,
+    opacity: 0.95,
+    side: THREE.DoubleSide,
+    depthTest: false,
+  });
+
+  reticleMesh = new THREE.Mesh(ring, material);
+  reticleMesh.rotation.x = -Math.PI / 2;
+  reticleMesh.renderOrder = 10;
+  reticleMesh.visible = false;
+  scene.add(reticleMesh);
 }
 
 async function loadCar(scene) {
@@ -170,45 +187,18 @@ async function loadCar(scene) {
   modelRoot.add(car);
   scene.add(modelRoot);
   applyScale();
-  setStatus("Aim the circle at the floor, then place.");
-}
-
-function getPointOnEstimatedFloor(clientX, clientY, distance = 4.2) {
-  if (!xrScene || !modelRoot) return;
-
-  const { camera } = xrScene;
-  const rect = canvas.getBoundingClientRect();
-  const x = ((clientX - rect.left) / rect.width) * 2 - 1;
-  const y = -(((clientY - rect.top) / rect.height) * 2 - 1);
-  const floorY = estimatedFloorY ?? camera.position.y - 1.65;
-
-  floorPlane.constant = -floorY;
-  raycaster.setFromCamera({ x, y }, camera);
-
-  const floorPoint = new THREE.Vector3();
-  if (raycaster.ray.intersectPlane(floorPlane, floorPoint) && floorPoint.distanceTo(camera.position) > 0.8) {
-    return floorPoint;
-  }
-
-  const direction = new THREE.Vector3(0, -0.42, -1).applyQuaternion(camera.quaternion).normalize();
-  return camera.position.clone().add(direction.multiplyScalar(distance)).setY(floorY);
+  setStatus("Move phone slowly until the target locks on.");
 }
 
 function placeAtReticle() {
   if (!modelRoot) return;
 
-  const target = getReticleCenter();
-  const hitPosition = hitTestAt(target.x, target.y);
-  if (hitPosition) {
-    placeModelAt(hitPosition);
+  if (reticleHitPosition) {
+    placeModelAt(reticleHitPosition);
     return;
   }
 
-  const floorPoint = getPointOnEstimatedFloor(target.x, target.y);
-  if (floorPoint) {
-    placeModelAt(floorPoint);
-    setStatus("Placed on target. Tilt lower if it still floats.");
-  }
+  setStatus("No floor target yet. Move phone slowly at the floor.");
 }
 
 function getHitPosition(hit) {
@@ -217,6 +207,10 @@ function getHitPosition(hit) {
   if (hit.position) {
     if (Array.isArray(hit.position)) return new THREE.Vector3(hit.position[0], hit.position[1], hit.position[2]);
     return new THREE.Vector3(hit.position.x, hit.position.y, hit.position.z);
+  }
+
+  if (typeof hit.x === "number" && typeof hit.y === "number" && typeof hit.z === "number") {
+    return new THREE.Vector3(hit.x, hit.y, hit.z);
   }
 
   if (hit.worldPosition) {
@@ -231,6 +225,13 @@ function getHitPosition(hit) {
     return new THREE.Vector3(position.x, position.y, position.z);
   }
 
+  if (Array.isArray(hit.transform) && hit.transform.length >= 16) {
+    const matrix = new THREE.Matrix4().fromArray(hit.transform);
+    const position = new THREE.Vector3();
+    position.setFromMatrixPosition(matrix);
+    return position;
+  }
+
   return null;
 }
 
@@ -238,9 +239,12 @@ function hitTestAt(clientX, clientY) {
   if (!window.XR8?.XrController) return null;
 
   const rect = canvas.getBoundingClientRect();
+  const relativeX = clientX - rect.left;
+  const relativeY = clientY - rect.top;
   const attempts = [
     [clientX, clientY],
-    [clientX - rect.left, clientY - rect.top],
+    [relativeX, relativeY],
+    [relativeX / rect.width, relativeY / rect.height],
   ];
 
   for (const [x, y] of attempts) {
@@ -267,6 +271,34 @@ function tryHitTestPlace(event) {
   placementReticle.style.top = `${event.clientY}px`;
 
   placeAtReticle();
+}
+
+function updateTrackedReticle() {
+  if (!reticleMesh || !modelRoot) return;
+
+  const target = getReticleCenter();
+  const hitPosition = hitTestAt(target.x, target.y);
+  if (hitPosition) {
+    reticleHitPosition = hitPosition;
+    reticleMesh.position.copy(hitPosition);
+    reticleMesh.visible = true;
+    placementReticle.style.opacity = "0";
+    placeCenterButton.disabled = false;
+    framesWithoutHit = 0;
+    if (!targetLocked && !placed) setStatus("Target locked. Place the car.");
+    targetLocked = true;
+    return;
+  }
+
+  framesWithoutHit += 1;
+  reticleHitPosition = null;
+  reticleMesh.visible = false;
+  placementReticle.style.opacity = "0.25";
+  placeCenterButton.disabled = true;
+  targetLocked = false;
+  if (!placed && framesWithoutHit === 90) {
+    setStatus("Still scanning. Point at textured floor and move slowly.");
+  }
 }
 
 function updateHotspot() {
@@ -302,6 +334,7 @@ function initScenePipelineModule() {
       const keyLight = new THREE.DirectionalLight(0xffffff, 3);
       keyLight.position.set(3, 5, 4);
       scene.add(keyLight);
+      createTrackedReticle(scene);
 
       camera.near = 0.01;
       camera.far = 80;
@@ -311,6 +344,7 @@ function initScenePipelineModule() {
     },
     onUpdate: () => {
       fitCanvasToScreen();
+      updateTrackedReticle();
       updateHotspot();
     },
   };
