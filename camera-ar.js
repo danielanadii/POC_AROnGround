@@ -14,7 +14,7 @@ const closeHotspot = document.querySelector("#closeHotspot");
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.01, 80);
-camera.position.set(0, 0.75, 4.2);
+camera.position.set(0, 0.85, 5.2);
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -34,12 +34,16 @@ scene.add(keyLight);
 
 const modelRoot = new THREE.Group();
 modelRoot.position.set(0, -0.35, 0);
+modelRoot.visible = false;
 scene.add(modelRoot);
 
 const hotspotWorld = new THREE.Vector3(0, 0.42, -0.34);
 let car = null;
 let baseScale = 1;
 let yaw = Math.PI;
+let cameraReady = false;
+let modelReady = false;
+let carPlaced = false;
 
 function showSecureMessage(text = "Open this page from your HTTPS GitHub Pages URL.") {
   secureCard.classList.add("is-visible");
@@ -64,7 +68,8 @@ async function startCamera() {
     });
     video.srcObject = stream;
     await video.play();
-    statusEl.textContent = "Camera ready. Move phone to frame the car.";
+    cameraReady = true;
+    statusEl.textContent = modelReady ? "Tap Place car or tap the camera" : "Camera ready. Loading car.";
   } catch (error) {
     console.error(error);
     showSecureMessage("Camera permission was blocked or no camera is available in this browser.");
@@ -94,7 +99,9 @@ async function loadModel() {
   });
   frameModel(car);
   modelRoot.add(car);
+  modelReady = true;
   applyScale();
+  statusEl.textContent = cameraReady ? "Tap Place car or tap the camera" : "Car ready. Starting camera.";
 }
 
 function applyScale() {
@@ -103,14 +110,27 @@ function applyScale() {
   scaleValue.textContent = `${scale.toFixed(2)}x`;
 }
 
+function placeCar(x = window.innerWidth / 2, y = window.innerHeight * 0.54) {
+  modelRoot.visible = true;
+  carPlaced = true;
+  modelRoot.position.x = (x / window.innerWidth - 0.5) * 2.4;
+  modelRoot.position.y = -(y / window.innerHeight - 0.58) * 1.2;
+  modelRoot.position.z = 0;
+  centerButton.textContent = "Recenter car";
+  statusEl.textContent = "Car placed. Tap screen to move it.";
+}
+
 function centerCar() {
-  modelRoot.position.set(0, -0.35, 0);
+  placeCar();
   yaw += Math.PI / 4;
   modelRoot.rotation.y = yaw - Math.PI;
 }
 
 function updateHotspot() {
-  if (!car) return;
+  if (!car || !carPlaced) {
+    hotspotDot.classList.remove("is-visible");
+    return;
+  }
 
   const point = hotspotWorld.clone();
   car.localToWorld(point);
@@ -132,8 +152,11 @@ window.addEventListener("resize", () => {
 });
 
 canvas.addEventListener("pointerdown", (event) => {
-  modelRoot.position.x = (event.clientX / window.innerWidth - 0.5) * 2.4;
-  modelRoot.position.y = -(event.clientY / window.innerHeight - 0.58) * 1.2;
+  if (!modelReady) {
+    statusEl.textContent = "Car is still loading.";
+    return;
+  }
+  placeCar(event.clientX, event.clientY);
 });
 
 scaleInput.addEventListener("input", applyScale);
