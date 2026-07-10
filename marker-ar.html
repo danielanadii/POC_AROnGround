@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#111827" />
+    <title>Toyota GR Supra Website AR</title>
+    <link rel="stylesheet" href="./marker-ar.css" />
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  </head>
+  <body>
+    <main class="web-ar-shell">
+      <section class="ar-top">
+        <div>
+          <p>Toyota GR Supra</p>
+          <h1>Website AR</h1>
+        </div>
+        <a href="./index.html" aria-label="Back to 3D viewer">Back</a>
+      </section>
+
+      <section class="ar-panel">
+        <div class="slider-row">
+          <label for="markerScale">Scale</label>
+          <input id="markerScale" type="range" min="0.5" max="2" step="0.05" value="1" />
+          <output id="markerScaleValue" for="markerScale">1.00x</output>
+        </div>
+        <div class="ar-status" id="markerStatus">Point camera at the Hiro marker</div>
+        <a class="marker-link" href="./marker.html" target="_blank" rel="noreferrer">Open marker</a>
+      </section>
+
+      <section class="hotspot-card" id="hotspotCard" aria-live="polite">
+        <button id="closeHotspot" type="button" aria-label="Close hotspot">x</button>
+        <p>Hotspot</p>
+        <h2>GR Supra</h2>
+        <span>Inline-six turbo coupe. Tap the green point again to revisit this note.</span>
+      </section>
+
+      <a-scene
+        embedded
+        vr-mode-ui="enabled: false"
+        loading-screen="enabled: false"
+        renderer="alpha: true; antialias: true; colorManagement: true"
+        arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
+      >
+        <a-assets>
+          <a-asset-item id="supraAsset" src="./toyota_gr_supra.glb"></a-asset-item>
+        </a-assets>
+
+        <a-marker id="hiroMarker" preset="hiro" emitevents="true" smooth="true">
+          <a-entity id="markerModelRoot" rotation="0 180 0" position="0 0 0">
+            <a-entity id="markerCar" gltf-model="#supraAsset" position="0 0 0" scale="0.22 0.22 0.22"></a-entity>
+            <a-sphere
+              id="specHotspot"
+              class="clickable"
+              position="0 0.42 -0.34"
+              radius="0.06"
+              color="#0f9f7a"
+              material="shader: flat"
+              animation="property: scale; dir: alternate; dur: 760; easing: easeInOutSine; loop: true; to: 1.35 1.35 1.35"
+            ></a-sphere>
+          </a-entity>
+        </a-marker>
+
+        <a-entity camera cursor="rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
+      </a-scene>
+    </main>
+
+    <script src="./marker-ar.js"></script>
+  </body>
+</html>

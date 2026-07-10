@@ -3,17 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0d1117" />
-    <title>NSX Ground AR</title>
+    <meta name="theme-color" content="#f7f9fc" />
+    <title>Toyota GR Supra Ground AR</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="app-shell">
-      <canvas id="scene" aria-label="3D Honda NSX viewer"></canvas>
+      <canvas id="scene" aria-label="3D Toyota GR Supra viewer"></canvas>
+      <model-viewer
+        id="nativeArViewer"
+        class="native-ar-viewer"
+        src="./toyota_gr_supra.glb"
+        ar
+        ar-modes="scene-viewer webxr quick-look"
+        camera-controls
+        shadow-intensity="0.8"
+        exposure="1"
+        loading="eager"
+      ></model-viewer>
 
       <section class="top-panel" aria-live="polite">
         <div>
-          <p class="eyebrow">1990 Honda NSX</p>
+          <p class="eyebrow">Toyota GR Supra</p>
           <h1>Ground placement</h1>
         </div>
         <div class="status-pill" id="status">Loading model</div>
@@ -42,6 +53,7 @@
             </svg>
           </button>
           <button id="arButton" type="button" class="primary-button" disabled>Place on ground</button>
+          <a class="secondary-button" href="./marker-ar.html">Website AR</a>
         </div>
       </section>
 
@@ -56,6 +68,10 @@
         }
       }
     </script>
+    <script
+      type="module"
+      src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"
+    ></script>
     <script type="module" src="./app.js"></script>
   </body>
 </html>

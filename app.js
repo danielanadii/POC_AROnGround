@@ -10,17 +10,24 @@ const resetViewButton = document.querySelector("#resetView");
 const rotateButton = document.querySelector("#rotateCar");
 const scaleInput = document.querySelector("#scale");
 const scaleValue = document.querySelector("#scaleValue");
+const nativeArViewer = document.querySelector("#nativeArViewer");
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d1117);
+scene.background = null;
 
 const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.01, 80);
 camera.position.set(3.2, 1.7, 4.8);
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true,
+  alpha: true,
+  premultipliedAlpha: false
+});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x000000, 0);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.xr.enabled = true;
@@ -32,7 +39,7 @@ controls.maxPolarAngle = Math.PI * 0.48;
 controls.minDistance = 2.5;
 controls.maxDistance = 8;
 
-const hemiLight = new THREE.HemisphereLight(0xddeeff, 0x2a332e, 2.4);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xd6dde5, 2.6);
 scene.add(hemiLight);
 
 const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
@@ -43,14 +50,14 @@ scene.add(keyLight);
 
 const ground = new THREE.Mesh(
   new THREE.CircleGeometry(5.5, 96),
-  new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.34 })
+  new THREE.ShadowMaterial({ color: 0x2f3a48, opacity: 0.18 })
 );
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-const grid = new THREE.GridHelper(10, 20, 0x24d3a2, 0x2d3748);
-grid.material.opacity = 0.22;
+const grid = new THREE.GridHelper(10, 20, 0x0f9f7a, 0xaab6c5);
+grid.material.opacity = 0.34;
 grid.material.transparent = true;
 scene.add(grid);
 
@@ -72,6 +79,7 @@ let hitTestSource = null;
 let hitTestSourceRequested = false;
 let currentSession = null;
 let placedInAR = false;
+let arLaunchMode = "none";
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -89,7 +97,7 @@ function makeReticle() {
   const group = new THREE.Group();
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.18, 0.24, 48).rotateX(-Math.PI / 2),
-    new THREE.MeshBasicMaterial({ color: 0x24d3a2 })
+    new THREE.MeshBasicMaterial({ color: 0x0f9f7a })
   );
   const dot = new THREE.Mesh(
     new THREE.CircleGeometry(0.035, 24).rotateX(-Math.PI / 2),
@@ -125,6 +133,9 @@ function applyScale() {
   const scale = Number(scaleInput.value);
   modelRoot.scale.setScalar(scale);
   scaleValue.textContent = `${scale.toFixed(2)}x`;
+  if (nativeArViewer) {
+    nativeArViewer.scale = `${scale} ${scale} ${scale}`;
+  }
 }
 
 function resetView() {
@@ -139,9 +150,23 @@ function rotateCar() {
   modelRoot.rotation.y = rotationStep;
 }
 
+function enterARRenderMode() {
+  document.documentElement.classList.add("is-ar");
+  document.body.classList.add("is-ar");
+  canvas.style.background = "transparent";
+  renderer.setClearColor(0x000000, 0);
+}
+
+function exitARRenderMode() {
+  document.documentElement.classList.remove("is-ar");
+  document.body.classList.remove("is-ar");
+  canvas.style.background = "";
+  renderer.setClearColor(0x000000, 0);
+}
+
 async function loadModel() {
   const loader = new GLTFLoader();
-  const gltf = await loader.loadAsync("./honda_nsx_1990.glb");
+  const gltf = await loader.loadAsync("./toyota_gr_supra.glb");
   car = gltf.scene;
   car.traverse((child) => {
     if (child.isMesh) {
@@ -161,21 +186,35 @@ async function loadModel() {
 }
 
 async function checkARSupport() {
-  if (!("xr" in navigator)) {
-    arButton.disabled = true;
-    setStatus("3D preview");
+  arLaunchMode = "none";
+
+  if ("xr" in navigator) {
+    try {
+      const supported = await navigator.xr.isSessionSupported("immersive-ar");
+      if (supported) {
+        arLaunchMode = "webxr";
+        arButton.disabled = false;
+        arButton.textContent = "Place on ground";
+        setStatus("AR ready");
+        return;
+      }
+    } catch {
+      arLaunchMode = "none";
+    }
+  }
+
+  await customElements.whenDefined("model-viewer").catch(() => {});
+  if (nativeArViewer && typeof nativeArViewer.activateAR === "function") {
+    arLaunchMode = "native";
+    arButton.disabled = false;
+    arButton.textContent = "Open AR";
+    setStatus("Native AR");
     return;
   }
 
-  try {
-    const supported = await navigator.xr.isSessionSupported("immersive-ar");
-    arButton.disabled = !supported;
-    arButton.textContent = supported ? "Place on ground" : "AR unavailable";
-    if (supported) setStatus("AR ready");
-  } catch {
-    arButton.disabled = true;
-    arButton.textContent = "AR unavailable";
-  }
+  arButton.disabled = true;
+  arButton.textContent = "3D only";
+  setStatus("3D preview");
 }
 
 async function startAR() {
@@ -197,6 +236,7 @@ async function startAR() {
     });
 
     currentSession = session;
+    enterARRenderMode();
     await renderer.xr.setSession(session);
     controls.enabled = false;
     ground.visible = false;
@@ -216,10 +256,12 @@ async function startAR() {
       ground.visible = true;
       grid.visible = true;
       reticle.visible = false;
+      exitARRenderMode();
       setStatus("AR ready");
       arButton.textContent = "Place on ground";
     });
   } catch (error) {
+    exitARRenderMode();
     console.error(error);
     showToast("AR could not start on this device/browser.");
   }
@@ -227,6 +269,20 @@ async function startAR() {
 
 async function endAR() {
   if (currentSession) await currentSession.end();
+}
+
+async function openNativeAR() {
+  if (!nativeArViewer || typeof nativeArViewer.activateAR !== "function") {
+    showToast("This browser can show 3D, but not native AR.");
+    return;
+  }
+
+  try {
+    await nativeArViewer.activateAR();
+  } catch (error) {
+    console.error(error);
+    showToast("Native AR is not available in this browser.");
+  }
 }
 
 function placeCarAtReticle() {
@@ -289,8 +345,12 @@ rotateButton.addEventListener("click", rotateCar);
 arButton.addEventListener("click", () => {
   if (currentSession) {
     endAR();
-  } else {
+  } else if (arLaunchMode === "webxr") {
     startAR();
+  } else if (arLaunchMode === "native") {
+    openNativeAR();
+  } else {
+    showToast("This browser supports 3D preview only.");
   }
 });
 
