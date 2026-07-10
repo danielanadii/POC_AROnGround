@@ -2,6 +2,7 @@ const canvas = document.querySelector("#xrCanvas");
 const statusEl = document.querySelector("#xrStatus");
 const scaleInput = document.querySelector("#xrScale");
 const scaleValue = document.querySelector("#xrScaleValue");
+const cameraModeButton = document.querySelector("#cameraMode");
 const placeCenterButton = document.querySelector("#placeCenter");
 const hotspotDot = document.querySelector("#xrHotspot");
 const hotspotCard = document.querySelector("#xrHotspotCard");
@@ -17,6 +18,7 @@ let placed = false;
 let started = false;
 let lastCanvasWidth = 0;
 let lastCanvasHeight = 0;
+let cameraMode = localStorage.getItem("supra-camera-mode") === "fill" ? "fill" : "fit";
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -30,16 +32,44 @@ function getViewportSize() {
   };
 }
 
+function getCanvasDisplaySize() {
+  const viewport = getViewportSize();
+  if (cameraMode === "fill") {
+    return {
+      width: viewport.width,
+      height: viewport.height,
+      left: 0,
+      top: 0,
+    };
+  }
+
+  const cameraAspect = 16 / 9;
+  let width = viewport.width;
+  let height = Math.round(width / cameraAspect);
+
+  if (height > viewport.height) {
+    height = viewport.height;
+    width = Math.round(height * cameraAspect);
+  }
+
+  return {
+    width,
+    height,
+    left: Math.round((viewport.width - width) / 2),
+    top: Math.round((viewport.height - height) / 2),
+  };
+}
+
 function fitCanvasToScreen() {
-  const { width, height } = getViewportSize();
+  const { width, height, left, top } = getCanvasDisplaySize();
   const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
   const bufferWidth = Math.round(width * pixelRatio);
   const bufferHeight = Math.round(height * pixelRatio);
 
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
-  canvas.style.left = "0";
-  canvas.style.top = "0";
+  canvas.style.left = `${left}px`;
+  canvas.style.top = `${top}px`;
 
   if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
     canvas.width = bufferWidth;
@@ -55,6 +85,24 @@ function fitCanvasToScreen() {
     lastCanvasWidth = bufferWidth;
     lastCanvasHeight = bufferHeight;
   }
+}
+
+function updateCameraModeButton() {
+  cameraModeButton.textContent = cameraMode === "fit" ? "Fit" : "Fill";
+  cameraModeButton.setAttribute(
+    "aria-label",
+    cameraMode === "fit" ? "Switch camera to full screen fill" : "Switch camera to uncropped fit"
+  );
+}
+
+function toggleCameraMode() {
+  cameraMode = cameraMode === "fit" ? "fill" : "fit";
+  localStorage.setItem("supra-camera-mode", cameraMode);
+  lastCanvasWidth = 0;
+  lastCanvasHeight = 0;
+  updateCameraModeButton();
+  fitCanvasToScreen();
+  setStatus(cameraMode === "fit" ? "Fit camera: less zoom, sharper." : "Fill camera: full screen crop.");
 }
 
 window.addEventListener("error", (event) => {
@@ -121,9 +169,10 @@ function tryHitTestPlace(event) {
   if (!window.XR8?.XrController || !modelRoot) return placeAtCameraForward();
 
   try {
+    const rect = canvas.getBoundingClientRect();
     const hits = window.XR8.XrController.hitTest(
-      event.clientX,
-      event.clientY,
+      event.clientX - rect.left,
+      event.clientY - rect.top,
       ["FEATURE_POINT", "ESTIMATED_SURFACE", "DETECTED_SURFACE"]
     );
 
@@ -153,9 +202,10 @@ function updateHotspot() {
   point.project(xrScene.camera);
 
   const visible = point.z > -1 && point.z < 1;
+  const rect = canvas.getBoundingClientRect();
   hotspotDot.classList.toggle("is-visible", visible);
-  hotspotDot.style.left = `${(point.x * 0.5 + 0.5) * window.innerWidth}px`;
-  hotspotDot.style.top = `${(-point.y * 0.5 + 0.5) * window.innerHeight}px`;
+  hotspotDot.style.left = `${rect.left + (point.x * 0.5 + 0.5) * rect.width}px`;
+  hotspotDot.style.top = `${rect.top + (-point.y * 0.5 + 0.5) * rect.height}px`;
 }
 
 function initScenePipelineModule() {
@@ -226,6 +276,7 @@ function onxrloaded() {
 
 canvas.addEventListener("pointerdown", tryHitTestPlace);
 placeCenterButton.addEventListener("click", placeAtCameraForward);
+cameraModeButton.addEventListener("click", toggleCameraMode);
 scaleInput.addEventListener("input", applyScale);
 hotspotDot.addEventListener("click", () => hotspotCard.classList.add("is-visible"));
 closeHotspot.addEventListener("click", () => hotspotCard.classList.remove("is-visible"));
@@ -233,6 +284,7 @@ window.addEventListener("resize", fitCanvasToScreen);
 window.visualViewport?.addEventListener("resize", fitCanvasToScreen);
 window.addEventListener("orientationchange", () => window.setTimeout(fitCanvasToScreen, 250));
 
+updateCameraModeButton();
 fitCanvasToScreen();
 if (!window.isSecureContext) {
   setStatus("Open over HTTPS to use camera AR");

@@ -37,13 +37,10 @@ body {
 body > canvas,
 body > video {
   position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100dvh !important;
-  min-width: 100vw !important;
-  min-height: 100dvh !important;
+  left: 0;
+  top: 0;
   display: block;
-  object-fit: cover !important;
+  object-fit: contain !important;
 }
 
 #xrCanvas {
@@ -128,6 +125,26 @@ body > video {
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 750;
+}
+
+.mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.mode-row button {
+  min-width: 78px;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  font: inherit;
 }
 
 input[type="range"] {
