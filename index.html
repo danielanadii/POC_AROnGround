@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d1117" />
+    <title>NSX Ground AR</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <canvas id="scene" aria-label="3D Honda NSX viewer"></canvas>
+
+      <section class="top-panel" aria-live="polite">
+        <div>
+          <p class="eyebrow">1990 Honda NSX</p>
+          <h1>Ground placement</h1>
+        </div>
+        <div class="status-pill" id="status">Loading model</div>
+      </section>
+
+      <section class="control-panel">
+        <div class="slider-row">
+          <label for="scale">Scale</label>
+          <input id="scale" type="range" min="0.45" max="1.8" step="0.05" value="1" />
+          <output id="scaleValue" for="scale">1.00x</output>
+        </div>
+
+        <div class="button-row">
+          <button id="resetView" type="button" class="icon-button" aria-label="Reset view" title="Reset view">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7" />
+              <path d="M3 4v6h6" />
+            </svg>
+          </button>
+          <button id="rotateCar" type="button" class="icon-button" aria-label="Rotate car" title="Rotate car">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 12a9 9 0 0 1-15.1 6.6" />
+              <path d="M3 12A9 9 0 0 1 18.1 5.4" />
+              <path d="M21 5v7h-7" />
+              <path d="M3 19v-7h7" />
+            </svg>
+          </button>
+          <button id="arButton" type="button" class="primary-button" disabled>Place on ground</button>
+        </div>
+      </section>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.166.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.166.1/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
