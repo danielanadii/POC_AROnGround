@@ -4,6 +4,7 @@ const scaleInput = document.querySelector("#xrScale");
 const scaleValue = document.querySelector("#xrScaleValue");
 const cameraModeButton = document.querySelector("#cameraMode");
 const placeCenterButton = document.querySelector("#placeCenter");
+const placementReticle = document.querySelector("#placementReticle");
 const hotspotDot = document.querySelector("#xrHotspot");
 const hotspotCard = document.querySelector("#xrHotspotCard");
 const closeHotspot = document.querySelector("#closeXrHotspot");
@@ -142,7 +143,15 @@ function placeModelAt(position) {
   modelRoot.visible = true;
   placed = true;
   estimatedFloorY = position.y;
-  setStatus("Placed. Tap another floor spot to move it.");
+  setStatus("Placed on target. Move the phone, then place again.");
+}
+
+function getReticleCenter() {
+  const rect = placementReticle.getBoundingClientRect();
+  return {
+    x: rect.left + rect.width * 0.5,
+    y: rect.top + rect.height * 0.5,
+  };
 }
 
 async function loadCar(scene) {
@@ -161,34 +170,45 @@ async function loadCar(scene) {
   modelRoot.add(car);
   scene.add(modelRoot);
   applyScale();
-  setStatus("Scan the floor, then tap to place");
+  setStatus("Aim the circle at the floor, then place.");
 }
 
-function getPointOnEstimatedFloor(clientX, clientY, distance = 2.4) {
+function getPointOnEstimatedFloor(clientX, clientY, distance = 4.2) {
   if (!xrScene || !modelRoot) return;
 
   const { camera } = xrScene;
   const rect = canvas.getBoundingClientRect();
   const x = ((clientX - rect.left) / rect.width) * 2 - 1;
   const y = -(((clientY - rect.top) / rect.height) * 2 - 1);
-  const floorY = estimatedFloorY ?? camera.position.y - 1.35;
+  const floorY = estimatedFloorY ?? camera.position.y - 1.65;
 
   floorPlane.constant = -floorY;
   raycaster.setFromCamera({ x, y }, camera);
 
   const floorPoint = new THREE.Vector3();
-  if (raycaster.ray.intersectPlane(floorPlane, floorPoint) && floorPoint.distanceTo(camera.position) > 0.35) {
+  if (raycaster.ray.intersectPlane(floorPlane, floorPoint) && floorPoint.distanceTo(camera.position) > 0.8) {
     return floorPoint;
   }
 
-  const direction = new THREE.Vector3(0, -0.28, -1).applyQuaternion(camera.quaternion).normalize();
+  const direction = new THREE.Vector3(0, -0.42, -1).applyQuaternion(camera.quaternion).normalize();
   return camera.position.clone().add(direction.multiplyScalar(distance)).setY(floorY);
 }
 
-function placeAtEstimatedFloor() {
-  const viewport = getViewportSize();
-  const point = getPointOnEstimatedFloor(viewport.width * 0.5, viewport.height * 0.72);
-  if (point) placeModelAt(point);
+function placeAtReticle() {
+  if (!modelRoot) return;
+
+  const target = getReticleCenter();
+  const hitPosition = hitTestAt(target.x, target.y);
+  if (hitPosition) {
+    placeModelAt(hitPosition);
+    return;
+  }
+
+  const floorPoint = getPointOnEstimatedFloor(target.x, target.y);
+  if (floorPoint) {
+    placeModelAt(floorPoint);
+    setStatus("Placed on target. Tilt lower if it still floats.");
+  }
 }
 
 function getHitPosition(hit) {
@@ -243,14 +263,10 @@ function hitTestAt(clientX, clientY) {
 function tryHitTestPlace(event) {
   if (!modelRoot) return;
 
-  const hitPosition = hitTestAt(event.clientX, event.clientY);
-  if (hitPosition) {
-    placeModelAt(hitPosition);
-    return;
-  }
+  placementReticle.style.left = `${event.clientX}px`;
+  placementReticle.style.top = `${event.clientY}px`;
 
-  const floorPoint = getPointOnEstimatedFloor(event.clientX, event.clientY);
-  if (floorPoint) placeModelAt(floorPoint);
+  placeAtReticle();
 }
 
 function updateHotspot() {
@@ -337,7 +353,7 @@ function onxrloaded() {
 }
 
 canvas.addEventListener("pointerdown", tryHitTestPlace);
-placeCenterButton.addEventListener("click", placeAtEstimatedFloor);
+placeCenterButton.addEventListener("click", placeAtReticle);
 cameraModeButton.addEventListener("click", toggleCameraMode);
 scaleInput.addEventListener("input", applyScale);
 hotspotDot.addEventListener("click", () => hotspotCard.classList.add("is-visible"));
