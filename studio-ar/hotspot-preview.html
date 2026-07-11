@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Supra Hotspot Lab</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+    <style>
+      :root { color: #17231f; background: #edf3ef; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      * { box-sizing: border-box; }
+      body { min-height: 100vh; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) 340px; }
+      model-viewer { width: 100%; height: 100vh; --poster-color: #dfe9e3; background: radial-gradient(circle at 38% 28%, #fdfefe, #cddbd2); }
+      .hotspot { width: var(--w); height: var(--h); border: 1px solid #38c5a1; border-radius: 999px; background: rgba(7, 53, 43, .92); color: #fff; font: 700 var(--f) / 1 Inter, ui-sans-serif, system-ui, sans-serif; cursor: pointer; box-shadow: 0 7px 20px rgba(6, 45, 37, .24); }
+      .hotspot.is-selected { background: #0e9679; border-color: #fff; }
+      aside { display: flex; min-height: 100vh; flex-direction: column; gap: 20px; padding: 24px; border-left: 1px solid #c7d4cc; background: #f9fcfa; }
+      .eyebrow { margin: 0 0 6px; color: #0a866d; font-size: 12px; font-weight: 800; letter-spacing: .1em; }
+      h1 { margin: 0; font-size: 28px; line-height: 1.1; letter-spacing: 0; }
+      .spot-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .spot-tabs button, .copy { min-height: 38px; border: 1px solid #c8d7cf; border-radius: 6px; background: #fff; color: #214238; font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; }
+      .spot-tabs button.is-selected { border-color: #0b9679; background: #e2f8f0; color: #076c58; }
+      .controls { display: grid; gap: 16px; }
+      .control { display: grid; grid-template-columns: 1fr 50px; gap: 8px 10px; align-items: center; }
+      .control label { font-size: 13px; font-weight: 750; }
+      .control output { color: #0b866d; font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+      .control input { grid-column: 1 / -1; width: 100%; accent-color: #0c9e81; }
+      .divider { height: 1px; background: #d8e2dc; }
+      textarea { width: 100%; min-height: 168px; resize: vertical; padding: 12px; border: 1px solid #c8d7cf; border-radius: 6px; background: #f3f8f5; color: #193d31; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .copy { border-color: #0b8b70; background: #0b8b70; color: white; }
+      @media (max-width: 760px) { body { display: block; } model-viewer { height: 58vh; } aside { min-height: 42vh; border-top: 1px solid #c7d4cc; border-left: 0; } }
+    </style>
+  </head>
+  <body>
+    <model-viewer id="car" src="./assets/toyota_gr_supra.glb" camera-controls interaction-prompt="none" shadow-intensity="1" exposure="1.05">
+    </model-viewer>
+    <aside>
+      <header>
+        <p class="eyebrow">TOYOTA GR SUPRA</p>
+        <h1>Hotspot Lab</h1>
+      </header>
+      <nav class="spot-tabs" aria-label="Hotspots">
+        <button data-spot="hood">Hood</button>
+        <button data-spot="trunk">Trunk</button>
+        <button data-spot="left-door">Left door</button>
+        <button data-spot="right-door">Right door</button>
+      </nav>
+      <section class="controls" aria-label="Selected hotspot controls">
+        <div class="control"><label for="x">Position X</label><output id="x-value"></output><input id="x" type="range" min="-0.16" max="0.16" step="0.005"></div>
+        <div class="control"><label for="y">Position Y</label><output id="y-value"></output><input id="y" type="range" min="-0.04" max="0.16" step="0.005"></div>
+        <div class="control"><label for="z">Position Z</label><output id="z-value"></output><input id="z" type="range" min="-0.16" max="0.16" step="0.005"></div>
+        <div class="divider"></div>
+        <div class="control"><label for="width">Button width</label><output id="width-value"></output><input id="width" type="range" min="32" max="110" step="2"></div>
+        <div class="control"><label for="height">Button height</label><output id="height-value"></output><input id="height" type="range" min="18" max="54" step="2"></div>
+        <div class="control"><label for="fontSize">Font size</label><output id="fontSize-value"></output><input id="fontSize" type="range" min="9" max="18" step="1"></div>
+      </section>
+      <textarea id="json" readonly aria-label="Updated Expanse JSON"></textarea>
+      <button class="copy" id="copy" type="button">Copy JSON</button>
+    </aside>
+    <script>
+      const hotspots = {
+        hood: { label: 'Hood', position: [0, 0.05, -0.075], width: 82, height: 30, fontSize: 12 },
+        trunk: { label: 'Trunk', position: [0, 0.05, 0.07], width: 82, height: 30, fontSize: 12 },
+        'left-door': { label: 'Left door', position: [-0.04, 0.035, -0.005], width: 92, height: 30, fontSize: 12 },
+        'right-door': { label: 'Right door', position: [0.04, 0.035, -0.005], width: 92, height: 30, fontSize: 12 },
+      }
+      const car = document.querySelector('#car')
+      const controls = ['x', 'y', 'z', 'width', 'height', 'fontSize']
+      let selected = 'hood'
+
+      Object.entries(hotspots).forEach(([id, hotspot]) => {
+        const button = document.createElement('button')
+        button.className = 'hotspot'
+        button.type = 'button'
+        button.slot = `hotspot-${id}`
+        button.dataset.spot = id
+        button.textContent = hotspot.label
+        button.addEventListener('click', () => select(id))
+        car.appendChild(button)
+      })
+
+      const update = () => {
+        const hotspot = hotspots[selected]
+        car.querySelectorAll('.hotspot').forEach((button) => {
+          const item = hotspots[button.dataset.spot]
+          const position = item.position.join(' ')
+          button.dataset.position = position
+          car.updateHotspot({name: button.slot, position, normal: '0 1 0'})
+          button.style.setProperty('--w', `${item.width}px`)
+          button.style.setProperty('--h', `${item.height}px`)
+          button.style.setProperty('--f', `${item.fontSize}px`)
+          button.classList.toggle('is-selected', button.dataset.spot === selected)
+        })
+        document.querySelectorAll('.spot-tabs button').forEach((button) => button.classList.toggle('is-selected', button.dataset.spot === selected))
+        controls.forEach((control) => {
+          const input = document.querySelector(`#${control}`)
+          const value = control === 'x' ? hotspot.position[0] : control === 'y' ? hotspot.position[1] : control === 'z' ? hotspot.position[2] : hotspot[control]
+          input.value = value
+          document.querySelector(`#${control}-value`).value = control === 'width' || control === 'height' || control === 'fontSize' ? `${value}px` : Number(value).toFixed(3)
+          document.querySelector(`#${control}-value`).textContent = document.querySelector(`#${control}-value`).value
+        })
+        document.querySelector('#json').value = `"position": [${hotspot.position.join(', ')}],\n"rotation": [0, 0, 0, 1],\n"scale": [1, 1, 1],\n"ui": {\n  "width": ${hotspot.width},\n  "height": ${hotspot.height},\n  "fontSize": ${hotspot.fontSize}\n}`
+      }
+
+      const select = (id) => { selected = id; update() }
+      document.querySelectorAll('.spot-tabs button').forEach((button) => button.addEventListener('click', () => select(button.dataset.spot)))
+      controls.forEach((control) => document.querySelector(`#${control}`).addEventListener('input', (event) => {
+        const value = Number(event.target.value)
+        const hotspot = hotspots[selected]
+        if (control === 'x') hotspot.position[0] = value
+        else if (control === 'y') hotspot.position[1] = value
+        else if (control === 'z') hotspot.position[2] = value
+        else hotspot[control] = value
+        update()
+      }))
+      document.querySelector('#copy').addEventListener('click', async () => {
+        await navigator.clipboard.writeText(document.querySelector('#json').value)
+        document.querySelector('#copy').textContent = 'Copied'
+      })
+      car.addEventListener('load', update)
+    </script>
+  </body>
+</html>
