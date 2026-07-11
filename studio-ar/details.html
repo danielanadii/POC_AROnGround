@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Toyota GR Supra</title>
+    <style>
+      :root { color: #15231f; background: #f5fbf8; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      body { min-height: 100vh; margin: 0; display: grid; grid-template-rows: 1fr auto; box-sizing: border-box; padding: max(28px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom)); }
+      main { align-self: center; }
+      p { margin: 0 0 12px; color: #087c66; font-size: 13px; font-weight: 800; letter-spacing: .12em; }
+      h1 { max-width: 11ch; margin: 0; font-size: clamp(42px, 12vw, 68px); line-height: 1; letter-spacing: 0; }
+      a { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border: 1px solid #0f806b; border-radius: 6px; color: #fff; background: #0f806b; font-weight: 750; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>TOYOTA GR SUPRA</p>
+      <h1 id="part">Vehicle detail</h1>
+    </main>
+    <a href="./">Back to AR</a>
+    <script>
+      const labels = {
+        hood: 'Hood',
+        trunk: 'Trunk',
+        'left-door': 'Left door',
+        'right-door': 'Right door',
+      }
+      const part = new URLSearchParams(window.location.search).get('part')
+      document.querySelector('#part').textContent = labels[part] || 'Vehicle detail'
+      document.title = `${document.querySelector('#part').textContent} | Toyota GR Supra`
+    </script>
+  </body>
+</html>
