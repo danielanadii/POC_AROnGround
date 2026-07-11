@@ -3,32 +3,67 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Toyota GR Supra</title>
+    <meta name="theme-color" content="#0a1b17">
+    <title>Toyota GR Supra | Detail</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
     <style>
-      :root { color: #15231f; background: #f5fbf8; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      body { min-height: 100vh; margin: 0; display: grid; grid-template-rows: 1fr auto; box-sizing: border-box; padding: max(28px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom)); }
-      main { align-self: center; }
-      p { margin: 0 0 12px; color: #087c66; font-size: 13px; font-weight: 800; letter-spacing: .12em; }
-      h1 { max-width: 11ch; margin: 0; font-size: clamp(42px, 12vw, 68px); line-height: 1; letter-spacing: 0; }
-      a { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border: 1px solid #0f806b; border-radius: 6px; color: #fff; background: #0f806b; font-weight: 750; text-decoration: none; }
+      :root { color: #ecf7f2; background: #0a1b17; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      * { box-sizing: border-box; }
+      body { min-height: 100vh; margin: 0; background: #0a1b17; }
+      header, main, nav { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+      header { display: flex; align-items: center; justify-content: space-between; min-height: 84px; border-bottom: 1px solid rgba(205, 239, 226, .16); }
+      .brand { color: #5de6c4; font-size: 12px; font-weight: 800; letter-spacing: .12em; }
+      .back { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border: 1px solid rgba(205, 239, 226, .28); border-radius: 6px; color: #f7fffc; font-size: 14px; font-weight: 760; text-decoration: none; }
+      main { display: grid; grid-template-columns: minmax(260px, .86fr) minmax(0, 1.14fr); min-height: calc(100vh - 190px); align-items: center; gap: 56px; padding: 48px 0; }
+      .eyebrow { margin: 0 0 16px; color: #5de6c4; font-size: 12px; font-weight: 800; letter-spacing: .12em; }
+      h1 { max-width: 8ch; margin: 0; font-size: clamp(46px, 7vw, 86px); line-height: .94; letter-spacing: 0; }
+      .summary { max-width: 39ch; margin: 24px 0 32px; color: #b7cdc4; font-size: 17px; line-height: 1.55; }
+      dl { margin: 0; border-top: 1px solid rgba(205, 239, 226, .18); }
+      .spec { display: grid; grid-template-columns: 102px 1fr; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgba(205, 239, 226, .18); }
+      dt { color: #81a69a; font-size: 13px; font-weight: 700; }
+      dd { margin: 0; color: #f2fbf7; font-size: 14px; font-weight: 650; }
+      model-viewer { width: 100%; height: min(66vh, 590px); border: 1px solid rgba(205, 239, 226, .2); border-radius: 8px; background: radial-gradient(circle at 50% 38%, #244338 0, #0d211b 68%); }
+      nav { display: flex; gap: 8px; overflow-x: auto; padding: 0 0 calc(24px + env(safe-area-inset-bottom)); }
+      nav a { flex: 0 0 auto; min-height: 38px; padding: 0 13px; display: inline-flex; align-items: center; border: 1px solid rgba(205, 239, 226, .25); border-radius: 6px; color: #d7ece4; font-size: 13px; font-weight: 720; text-decoration: none; }
+      nav a.is-active { border-color: #5de6c4; color: #5de6c4; }
+      @media (max-width: 760px) { header, main, nav { width: min(100% - 32px, 580px); } header { min-height: 70px; } main { grid-template-columns: 1fr; gap: 28px; min-height: 0; padding: 34px 0 28px; } h1 { font-size: 54px; } model-viewer { height: 46vh; min-height: 330px; } }
     </style>
   </head>
   <body>
+    <header>
+      <div class="brand">TOYOTA GR SUPRA</div>
+      <a class="back" href="./">Back to AR</a>
+    </header>
     <main>
-      <p>TOYOTA GR SUPRA</p>
-      <h1 id="part">Vehicle detail</h1>
+      <section>
+        <p class="eyebrow" id="eyebrow"></p>
+        <h1 id="title"></h1>
+        <p class="summary" id="summary"></p>
+        <dl id="specs"></dl>
+      </section>
+      <model-viewer src="./assets/toyota_gr_supra.glb" scale="30 30 30" camera-controls interaction-prompt="none" shadow-intensity="1" exposure="1.05" alt="Toyota GR Supra 3D model"></model-viewer>
     </main>
-    <a href="./">Back to AR</a>
+    <nav aria-label="Vehicle details">
+      <a data-part="hood" href="?part=hood">Hood</a>
+      <a data-part="trunk" href="?part=trunk">Trunk</a>
+      <a data-part="left-door" href="?part=left-door">Left door</a>
+      <a data-part="right-door" href="?part=right-door">Right door</a>
+    </nav>
     <script>
-      const labels = {
-        hood: 'Hood',
-        trunk: 'Trunk',
-        'left-door': 'Left door',
-        'right-door': 'Right door',
+      const details = {
+        hood: { eyebrow: 'EXTERIOR / 01', title: 'Hood', summary: 'A sculpted front surface that carries the Supra’s low, planted stance into every view.', specs: [['Feature', 'Sculpted aluminium panel'], ['Focus', 'Cooling and airflow'], ['Finish', 'Body-colour paint']] },
+        trunk: { eyebrow: 'UTILITY / 02', title: 'Trunk', summary: 'A compact rear storage area shaped around the Supra’s fastback silhouette.', specs: [['Feature', 'Rear cargo opening'], ['Focus', 'Everyday utility'], ['Access', 'Liftback design']] },
+        'left-door': { eyebrow: 'CABIN / 03', title: 'Left door', summary: 'The driver-side entry point, with a long coupe door and a low seating position.', specs: [['Feature', 'Driver entry'], ['Focus', 'Cockpit access'], ['Detail', 'Frameless glass']] },
+        'right-door': { eyebrow: 'CABIN / 04', title: 'Right door', summary: 'The passenger-side entry point, mirroring the Supra’s clean, focused coupe profile.', specs: [['Feature', 'Passenger entry'], ['Focus', 'Cabin access'], ['Detail', 'Frameless glass']] },
       }
-      const part = new URLSearchParams(window.location.search).get('part')
-      document.querySelector('#part').textContent = labels[part] || 'Vehicle detail'
-      document.title = `${document.querySelector('#part').textContent} | Toyota GR Supra`
+      const part = new URLSearchParams(location.search).get('part') || 'hood'
+      const detail = details[part] || details.hood
+      document.querySelector('#eyebrow').textContent = detail.eyebrow
+      document.querySelector('#title').textContent = detail.title
+      document.querySelector('#summary').textContent = detail.summary
+      document.querySelector('#specs').innerHTML = detail.specs.map(([term, value]) => `<div class="spec"><dt>${term}</dt><dd>${value}</dd></div>`).join('')
+      document.querySelectorAll('[data-part]').forEach((link) => link.classList.toggle('is-active', link.dataset.part === part))
+      document.title = `${detail.title} | Toyota GR Supra`
     </script>
   </body>
 </html>
