@@ -45,7 +45,7 @@
           return
         }
         loaded += value.byteLength
-        copy.textContent = `Loading 3D object ${Math.min(100, Math.round(loaded / total * 100))}%`
+        copy.textContent = `Loading 3D vehicle ${Math.min(100, Math.round(loaded / total * 100))}%`
       }
     }
 
@@ -64,7 +64,7 @@
           return
         }
         boot.classList.add('is-loading')
-        copy.textContent = 'Loading 3D object...'
+        copy.textContent = 'Loading 3D vehicle...'
         await preloadSupra()
         window.__supraAssetReady = true
         copy.textContent = 'Opening your camera...'
@@ -74,6 +74,10 @@
           crossOrigin: 'anonymous',
         })
         await loadScript('./bundle.js')
+        copy.textContent = 'Preparing the 3D vehicle...'
+        if (!window.__supraModelReady) {
+          await new Promise(resolve => window.addEventListener('supra-model-ready', resolve, {once: true}))
+        }
         boot.classList.add('is-hidden')
       } catch {
         start.disabled = false
