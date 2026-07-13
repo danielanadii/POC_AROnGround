@@ -30,7 +30,7 @@
       defineState: l
     }) => {
       l("initial").initial().listen(s, e.input.SCREEN_TOUCH_START, l => {
-        l.data.worldPosition && (d = window.setTimeout(() => {
+        !0 === window.__supraAssetReady && l.data.worldPosition && (d = window.setTimeout(() => {
           (d => {
             const l = !n;
             n = n || t.createEntity(c.get(s).prefab), r = t;

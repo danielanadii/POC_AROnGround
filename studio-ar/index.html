@@ -5,7 +5,11 @@
     .ar-boot-card h1 { margin: 0; font-size: 32px; line-height: 1.08; letter-spacing: 0; }
     .ar-boot-card p { margin: 12px 0 22px; color: #b4c9c1; font-size: 15px; line-height: 1.45; }
     #ar-boot-start { width: 100%; min-height: 50px; border: 0; border-radius: 7px; background: #1ed7ac; color: #04100d; font: 800 16px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    #ar-boot-start:disabled { opacity: .55; }</style><meta property="og:image" content="https://8thwall.org/studio-world-effects-example/assets/preview.png"></head><body><section id="ar-boot" aria-live="polite"><div class="ar-boot-card"><h1>See it on the ground</h1><p id="ar-boot-copy">Allow motion access so the Supra stays anchored in your space.</p><button id="ar-boot-start" type="button">Start AR</button></div></section><script>(() => {
+    #ar-boot-start:disabled { opacity: .55; }
+    .ar-boot-spinner { display: none; width: 28px; height: 28px; margin: 0 0 18px; border: 3px solid rgba(112,233,201,.24); border-top-color: #70e9c9; border-radius: 50%; animation: ar-boot-spin .8s linear infinite; }
+    #ar-boot.is-loading .ar-boot-spinner { display: block; }
+    #ar-boot.is-loading #ar-boot-start { display: none; }
+    @keyframes ar-boot-spin { to { transform: rotate(360deg); } }</style><meta property="og:image" content="https://8thwall.org/studio-world-effects-example/assets/preview.png"></head><body><section id="ar-boot" aria-live="polite"><div class="ar-boot-card"><div class="ar-boot-spinner" aria-hidden="true"></div><h1>See it on the ground</h1><p id="ar-boot-copy">Allow motion access so the Supra stays anchored in your space.</p><button id="ar-boot-start" type="button">Start AR</button></div></section><script>(() => {
     const boot = document.querySelector('#ar-boot')
     const start = document.querySelector('#ar-boot-start')
     const copy = document.querySelector('#ar-boot-copy')
@@ -23,6 +27,27 @@
     const requestPermission = (eventType) => eventType && eventType.requestPermission
       ? eventType.requestPermission()
       : Promise.resolve('granted')
+    const preloadSupra = async () => {
+      const response = await fetch('./assets/toyota_gr_supra.glb', {cache: 'force-cache'})
+      if (!response.ok) {
+        throw new Error('The 3D model could not be downloaded.')
+      }
+      const total = Number(response.headers.get('content-length'))
+      if (!response.body || !total) {
+        await response.arrayBuffer()
+        return
+      }
+      const reader = response.body.getReader()
+      let loaded = 0
+      while (true) {
+        const {done, value} = await reader.read()
+        if (done) {
+          return
+        }
+        loaded += value.byteLength
+        copy.textContent = `Loading 3D object ${Math.min(100, Math.round(loaded / total * 100))}%`
+      }
+    }
 
     start.addEventListener('click', async () => {
       start.disabled = true
@@ -38,6 +63,10 @@
           copy.textContent = 'Motion access is needed to anchor the car on the ground.'
           return
         }
+        boot.classList.add('is-loading')
+        copy.textContent = 'Loading 3D object...'
+        await preloadSupra()
+        window.__supraAssetReady = true
         copy.textContent = 'Opening your camera...'
         await loadScript('./external/runtime/runtime.js')
         await loadScript('https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js', {
