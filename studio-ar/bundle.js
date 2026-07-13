@@ -109,7 +109,7 @@
       label: "Right door",
       part: "right-door"
     }],
-    g = {
+    h = {
       hood: {
         eyebrow: "EXTERIOR / 01",
         title: "Hood",
@@ -143,7 +143,7 @@
     }) => {
       let n = [],
         p = !1;
-      const h = () => {
+      const g = () => {
         const e = u();
         if (n.forEach(e => {
           e.style.display = "none";
@@ -175,12 +175,12 @@
       };
       a("initial").initial().onEnter(() => {
         const t = document.createElement("div");
-        t.id = "supra-ui-root", t.innerHTML = '\n  <style>\n    #supra-ar-hud { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }\n    #supra-ar-hud { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); left: 16px; z-index: 9999; pointer-events: none; }\n    .supra-panel { display: grid; grid-template-columns: 1fr auto; gap: 14px 18px; align-items: center; box-sizing: border-box; padding: 15px 16px; border: 1px solid rgba(255,255,255,.3); border-radius: 8px; background: rgba(7, 18, 16, .84); box-shadow: 0 12px 36px rgba(0,0,0,.26); backdrop-filter: blur(14px); color: white; pointer-events: auto; }\n    .supra-name { font-size: 15px; font-weight: 760; letter-spacing: .04em; }\n    .supra-status { margin-top: 4px; color: #70e9c9; font-size: 12px; font-weight: 650; }\n    .supra-reset { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.34); border-radius: 50%; background: rgba(255,255,255,.08); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }\n    .supra-scale { grid-column: 1 / -1; display: grid; grid-template-columns: 44px 1fr 50px; gap: 12px; align-items: center; }\n    .supra-scale label, .supra-scale output { font-size: 13px; font-weight: 700; }\n    .supra-scale output { color: #70e9c9; text-align: right; }\n    #supra-scale-input { width: 100%; accent-color: #1ed7ac; }\n    #supra-car-hotspots { position: fixed; inset: 0; z-index: 9998; pointer-events: none; }\n    .supra-car-hotspot { position: fixed; display: none; min-width: 54px; height: 28px; padding: 0 12px; border: 1px solid #76f0d2; border-radius: 14px; background: rgba(5, 55, 44, .94); box-shadow: 0 5px 16px rgba(0, 0, 0, .25); color: #fff; font: 750 11px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; pointer-events: auto; }\n    #supra-detail-overlay { position: fixed; inset: 0; z-index: 10001; display: none; align-items: end; padding: 16px; box-sizing: border-box; background: rgba(0, 0, 0, .52); color: #effbf6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; pointer-events: auto; }\n    #supra-detail-overlay.is-open { display: flex; }\n    .supra-detail-sheet { width: min(100%, 560px); margin: 0 auto calc(env(safe-area-inset-bottom)); padding: 20px; border: 1px solid rgba(133, 239, 211, .34); border-radius: 8px; background: rgba(7, 24, 20, .97); box-shadow: 0 20px 54px rgba(0, 0, 0, .45); }\n    .supra-detail-top { display: flex; align-items: center; justify-content: space-between; gap: 18px; }\n    .supra-detail-eyebrow { margin: 0; color: #70e9c9; font-size: 11px; font-weight: 800; letter-spacing: .12em; }\n    .supra-detail-close { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.34); border-radius: 50%; background: rgba(255,255,255,.08); color: #fff; font-size: 24px; line-height: 1; }\n    .supra-detail-title { margin: 18px 0 10px; font-size: 32px; line-height: 1; letter-spacing: 0; }\n    .supra-detail-summary { margin: 0; color: #b8cec5; font-size: 15px; line-height: 1.48; }\n    .supra-detail-specs { margin: 20px 0 0; border-top: 1px solid rgba(255,255,255,.16); }\n    .supra-detail-spec { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.16); }\n    .supra-detail-spec dt { color: #86aba0; font-size: 12px; font-weight: 700; }\n    .supra-detail-spec dd { margin: 0; font-size: 13px; font-weight: 650; }\n    .supra-detail-nav { display: flex; gap: 7px; overflow-x: auto; margin-top: 18px; }\n    .supra-detail-nav button { min-height: 36px; padding: 0 12px; flex: 0 0 auto; border: 1px solid rgba(205, 239, 226, .26); border-radius: 6px; background: transparent; color: #d7ece4; font-size: 12px; font-weight: 720; }\n    .supra-detail-nav button.is-active { border-color: #70e9c9; color: #70e9c9; }\n  </style>\n  <aside id="supra-ar-hud">\n    <div class="supra-panel">\n      <div><div class="supra-name">TOYOTA GR SUPRA</div><div class="supra-status">AR Preview</div></div>\n      <button class="supra-reset" type="button" aria-label="Reset car" title="Reset car">&#8635;</button>\n      <div class="supra-scale">\n        <label for="supra-scale-input">Scale</label>\n        <input id="supra-scale-input" type="range" min="0.5" max="1.75" step="0.05" value="1" aria-label="Car scale">\n        <output for="supra-scale-input">1.00x</output>\n      </div>\n    </div>\n  </aside>\n  <div id="supra-car-hotspots"></div>\n  <section id="supra-detail-overlay" aria-hidden="true">\n    <article class="supra-detail-sheet" aria-label="Vehicle detail">\n      <div class="supra-detail-top">\n        <p class="supra-detail-eyebrow"></p>\n        <button class="supra-detail-close" type="button" aria-label="Back to AR" title="Back to AR">&#8592;</button>\n      </div>\n      <h2 class="supra-detail-title"></h2>\n      <p class="supra-detail-summary"></p>\n      <dl class="supra-detail-specs"></dl>\n      <nav class="supra-detail-nav" aria-label="Vehicle details"></nav>\n    </article>\n  </section>\n', document.body.appendChild(t);
+        t.id = "supra-ui-root", t.innerHTML = '\n  <style>\n    #supra-ar-hud { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }\n    #supra-ar-hud { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); left: 16px; z-index: 9999; pointer-events: none; }\n    .supra-panel { display: grid; grid-template-columns: 1fr auto; gap: 14px 18px; align-items: center; box-sizing: border-box; padding: 15px 16px; border: 1px solid rgba(255,255,255,.3); border-radius: 8px; background: rgba(7, 18, 16, .84); box-shadow: 0 12px 36px rgba(0,0,0,.26); backdrop-filter: blur(14px); color: white; pointer-events: auto; }\n    .supra-name { font-size: 15px; font-weight: 760; letter-spacing: .04em; }\n    .supra-status { margin-top: 4px; color: #70e9c9; font-size: 12px; font-weight: 650; }\n    .supra-reset { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.34); border-radius: 50%; background: rgba(255,255,255,.08); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }\n    .supra-scale { grid-column: 1 / -1; display: grid; grid-template-columns: 44px 1fr 50px; gap: 12px; align-items: center; }\n    .supra-scale label, .supra-scale output { font-size: 13px; font-weight: 700; }\n    .supra-scale output { color: #70e9c9; text-align: right; }\n    #supra-scale-input { width: 100%; accent-color: #1ed7ac; }\n    #supra-car-hotspots { position: fixed; inset: 0; z-index: 9998; pointer-events: none; }\n    .supra-car-hotspot { position: fixed; display: none; min-width: 54px; height: 28px; padding: 0 12px; border: 1px solid #76f0d2; border-radius: 14px; background: rgba(5, 55, 44, .94); box-shadow: 0 5px 16px rgba(0, 0, 0, .25); color: #fff; font: 750 11px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; pointer-events: auto; }\n    #supra-detail-overlay { position: fixed; inset: 0; z-index: 10001; display: none; overflow-y: auto; box-sizing: border-box; background: #edf6f1; color: #10251d; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; pointer-events: auto; }\n    #supra-detail-overlay.is-open { display: block; }\n    .supra-detail-sheet { box-sizing: border-box; width: min(100%, 640px); min-height: 100dvh; margin: 0 auto; padding: calc(24px + env(safe-area-inset-top)) 24px calc(36px + env(safe-area-inset-bottom)); }\n    .supra-detail-top { display: flex; align-items: center; justify-content: space-between; gap: 18px; }\n    .supra-detail-eyebrow { margin: 0; color: #087e66; font-size: 12px; font-weight: 800; letter-spacing: .12em; }\n    .supra-detail-close { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid #9ab8aa; border-radius: 50%; background: transparent; color: #163b2d; font-size: 24px; line-height: 1; }\n    .supra-detail-title { margin: 88px 0 16px; color: #10251d; font-size: 52px; line-height: .94; letter-spacing: 0; }\n    .supra-detail-summary { max-width: 27ch; margin: 0; color: #426257; font-size: 19px; line-height: 1.48; }\n    .supra-detail-specs { margin: 52px 0 0; border-top: 1px solid #b6cec2; }\n    .supra-detail-spec { display: grid; grid-template-columns: minmax(88px, .72fr) minmax(0, 1.3fr); gap: 18px; padding: 18px 0; border-bottom: 1px solid #b6cec2; }\n    .supra-detail-spec dt { color: #54796b; font-size: 13px; font-weight: 750; }\n    .supra-detail-spec dd { margin: 0; color: #17372a; font-size: 15px; font-weight: 700; line-height: 1.36; }\n    .supra-detail-nav { display: flex; gap: 8px; overflow-x: auto; margin-top: 44px; padding-bottom: 2px; }\n    .supra-detail-nav button { min-height: 42px; padding: 0 14px; flex: 0 0 auto; border: 1px solid #9ab8aa; border-radius: 6px; background: transparent; color: #254b3d; font-size: 13px; font-weight: 750; }\n    .supra-detail-nav button.is-active { border-color: #087e66; background: #087e66; color: #fff; }\n  </style>\n  <aside id="supra-ar-hud">\n    <div class="supra-panel">\n      <div><div class="supra-name">TOYOTA GR SUPRA</div><div class="supra-status">AR Preview</div></div>\n      <button class="supra-reset" type="button" aria-label="Reset car" title="Reset car">&#8635;</button>\n      <div class="supra-scale">\n        <label for="supra-scale-input">Scale</label>\n        <input id="supra-scale-input" type="range" min="0.5" max="1.75" step="0.05" value="1" aria-label="Car scale">\n        <output for="supra-scale-input">1.00x</output>\n      </div>\n    </div>\n  </aside>\n  <div id="supra-car-hotspots"></div>\n  <section id="supra-detail-overlay" aria-hidden="true">\n    <article class="supra-detail-sheet" aria-label="Vehicle detail">\n      <div class="supra-detail-top">\n        <p class="supra-detail-eyebrow"></p>\n        <button class="supra-detail-close" type="button" aria-label="Back to AR" title="Back to AR">&#8592;</button>\n      </div>\n      <h2 class="supra-detail-title"></h2>\n      <p class="supra-detail-summary"></p>\n      <dl class="supra-detail-specs"></dl>\n      <nav class="supra-detail-nav" aria-label="Vehicle details"></nav>\n    </article>\n  </section>\n', document.body.appendChild(t);
         const a = document.querySelector("#supra-ar-hud"),
           o = document.querySelector("#supra-scale-input"),
           u = document.querySelector(".supra-scale output"),
           f = document.querySelector(".supra-reset"),
-          h = document.querySelector("#supra-car-hotspots"),
+          g = document.querySelector("#supra-car-hotspots"),
           y = document.querySelector("#supra-detail-overlay"),
           x = document.querySelector(".supra-detail-eyebrow"),
           v = document.querySelector(".supra-detail-title"),
@@ -195,25 +195,22 @@
               !e || t.isPaused && t.isPaused() ? e || t.isPaused && !t.isPaused() || t.resume?.() : t.pause?.();
             } catch {}
           },
-          L = () => {
+          z = () => {
             p = !1, y.classList.remove("is-open"), y.setAttribute("aria-hidden", "true"), I(!1);
           },
-          R = (e, t = !0) => {
-            const a = g[e];
+          L = (e, t = !0) => {
+            const a = h[e];
             x.textContent = a.eyebrow, v.textContent = a.title, w.textContent = a.summary, E.innerHTML = a.specs.map(([e, t]) => `<div class="supra-detail-spec"><dt>${e}</dt><dd>${t}</dd></div>`).join(""), S.querySelectorAll("button").forEach(t => t.classList.toggle("is-active", t.dataset.part === e)), p = !0, y.classList.add("is-open"), y.setAttribute("aria-hidden", "false"), I(!0), t && history.pushState({
               supraDetail: e
             }, "", `?part=${e}`);
-          },
-          z = () => {
-            history.state?.supraDetail ? history.back() : L();
           };
         S.innerHTML = m.map(e => `<button type="button" data-part="${e.part}">${e.label}</button>`).join(""), S.querySelectorAll("button").forEach(e => {
-          e.addEventListener("click", () => R(e.dataset.part, !1));
-        }), T.addEventListener("click", z), y.addEventListener("click", e => {
-          e.target === y && z();
-        }), window.addEventListener("popstate", L), n = m.map(e => {
+          e.addEventListener("click", () => L(e.dataset.part, !1));
+        }), T.addEventListener("click", () => {
+          history.state?.supraDetail ? history.back() : z();
+        }), window.addEventListener("popstate", z), n = m.map(e => {
           const t = document.createElement("button");
-          return t.className = "supra-car-hotspot", t.type = "button", t.dataset.hotspot = e.label, t.textContent = e.label, t.addEventListener("pointerdown", k), t.addEventListener("touchstart", k), t.addEventListener("click", () => R(e.part)), h.appendChild(t), t;
+          return t.className = "supra-car-hotspot", t.type = "button", t.dataset.hotspot = e.label, t.textContent = e.label, t.addEventListener("pointerdown", k), t.addEventListener("touchstart", k), t.addEventListener("click", () => L(e.part)), g.appendChild(t), t;
         }), a?.addEventListener("pointerdown", k), a?.addEventListener("touchstart", k), o.addEventListener("input", () => {
           const t = Number(o.value);
           u.value = `${t.toFixed(2)}x`, u.textContent = u.value, (t => {
@@ -245,26 +242,26 @@
             }, 650);
           })();
         });
-        let C = null;
-        const A = t => {
-          if (p || 2 !== t.touches.length || t.target instanceof Element && t.target.closest("#supra-ar-hud")) return void (C = null);
+        let R = null;
+        const C = t => {
+          if (p || 2 !== t.touches.length || t.target instanceof Element && t.target.closest("#supra-ar-hud")) return void (R = null);
           const [a, o] = [t.touches[0], t.touches[1]],
             n = Math.atan2(o.clientY - a.clientY, o.clientX - a.clientX);
           var r;
-          null !== C && (r = C - n, i && d && d.getEntity(i).rotateSelf(e.math.quat.yRadians(r))), C = n;
+          null !== R && (r = R - n, i && d && d.getEntity(i).rotateSelf(e.math.quat.yRadians(r))), R = n;
         };
-        document.addEventListener("touchstart", A, {
+        document.addEventListener("touchstart", C, {
           passive: !0
-        }), document.addEventListener("touchmove", A, {
+        }), document.addEventListener("touchmove", C, {
           passive: !0
         }), document.addEventListener("touchend", () => {
-          C = null;
+          R = null;
         }, {
           passive: !0
         });
-      }).onTick(h).onEvent(e.events.REALITY_READY, "ready", {
+      }).onTick(g).onEvent(e.events.REALITY_READY, "ready", {
         target: t.events.globalId
-      }), a("ready").onTick(h);
+      }), a("ready").onTick(g);
     }
   }), e.registerComponent({
     name: "hide-on-ready",
@@ -280,10 +277,10 @@
       });
     }
   });
-  const h = e.registerComponent({
+  const g = e.registerComponent({
       name: "logo"
     }),
-    y = e.defineQuery([h]);
+    y = e.defineQuery([g]);
   e.registerComponent({
     name: "reset-button",
     stateMachine: ({
